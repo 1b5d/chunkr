@@ -1,13 +1,6 @@
 
-<a id='changelog-0.1.2'></a>
-# 0.1.2 — 2022-08-06
-
-## Fixed
-
-- variaous fixes
-
-<a id='changelog-0.1.1'></a>
-# 0.1.1 — 2022-08-05
+<a id='changelog-0.1.3'></a>
+# 0.1.3 — 2022-08-05
 
 ## Added
 

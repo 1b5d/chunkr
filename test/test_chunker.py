@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from chunkr import create_chunks_dir
-from exceptions import ChunkrInvalid
+from chunkr.exceptions import ChunkrInvalid
 
 
 def test_empty():
