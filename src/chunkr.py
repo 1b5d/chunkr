@@ -2,7 +2,6 @@
 chunkr can chunk data files and convert them into
 other formats (currently parquet) at the same time
 """
-
 import logging
 import pathlib
 import shutil
@@ -12,6 +11,8 @@ import fsspec
 from pyarrow import csv
 import pyarrow as pa
 import pyarrow.parquet as pq
+
+from src.exceptions import ChunkrInvalid
 
 logger = logging.getLogger(__file__)
 
@@ -113,29 +114,57 @@ class CsvChunksDir(ChunksDir):
                          storage_options, write_options)
 
     def _estimate_row_size(self, path, sample_block_size=256 * 1024):
-        with csv.open_csv(
-                path,
-                read_options=csv.ReadOptions(block_size=sample_block_size),
-                parse_options=csv.ParseOptions(**self.kwargs),
-        ) as csv_reader:
-            batch = next(iter(csv_reader))
-            path.seek(0)
-            if not batch or batch.num_rows == 0:
-                return 1
-            return batch.nbytes // batch.num_rows
+        try:
+            with csv.open_csv(
+                    path,
+                    read_options=csv.ReadOptions(block_size=sample_block_size),
+                    parse_options=csv.ParseOptions(**self.kwargs),
+            ) as csv_reader:
+                batch = next(iter(csv_reader))
+                path.seek(0)
+                if not batch or batch.num_rows == 0:
+                    return 1
+                return batch.nbytes // batch.num_rows
+        except pa.ArrowInvalid as e:
+            raise ChunkrInvalid(str(e)) from e
 
     def _process(self, path):
         row_size = self._estimate_row_size(path)
-        with csv.open_csv(
-                path,
-                read_options=csv.ReadOptions(block_size=row_size *
-                                             self.chunk_size),
-                parse_options=csv.ParseOptions(**self.kwargs),
-        ) as csv_reader:
-            for batch in csv_reader:
-                tmp_file = super()._create_chunk_filename()
-                self._write_chunk(batch.to_pandas(), tmp_file,
-                                  **self.write_options)
+        block_size = row_size * self.chunk_size
+
+        try:
+            with csv.open_csv(
+                    path,
+                    read_options=csv.ReadOptions(block_size=block_size),
+                    parse_options=csv.ParseOptions(
+                        **self.kwargs)) as csv_reader:
+                batch_capa = 0
+                buffered = 0
+                while True:
+                    try:
+                        if buffered == 0:
+                            batch = csv_reader.read_next_batch()
+                            schema = batch.schema
+                            buffered = batch.num_rows
+                        if batch_capa == 0:
+                            tmp_file = super()._create_chunk_filename()
+                            pqwriter = pq.ParquetWriter(tmp_file, schema,
+                                                        **self.write_options)
+                            batch_capa = self.chunk_size
+
+                        to_write = batch.slice(offset=batch.num_rows - buffered,
+                                               length=min(buffered, batch_capa))
+                        logger.debug('writing %d records', to_write.num_rows)
+                        pqwriter.write_batch(to_write)
+                        batch_capa -= to_write.num_rows
+                        buffered -= to_write.num_rows
+                        if batch_capa == 0:
+                            pqwriter.close()
+                    except StopIteration:
+                        pqwriter.close()
+                        break
+        except pa.ArrowInvalid as e:
+            raise ChunkrInvalid(str(e)) from e
 
 
 class ParquetChunkDir(ChunksDir):

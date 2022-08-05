@@ -2,6 +2,21 @@ import pandas as pd
 import pytest
 
 from src.chunkr import create_chunks_dir
+from src.exceptions import ChunkrInvalid
+
+
+def test_empty():
+    with pytest.raises(ChunkrInvalid):
+        with create_chunks_dir(
+                'csv',
+                'TestTable',
+                'test/csv/empty.csv',
+                '/tmp',
+                1000,
+                None,
+                None,
+        ) as _:
+            pass
 
 
 @pytest.mark.parametrize(
@@ -146,6 +161,10 @@ def test_csv(
             delimiter=delimiter,
             escape_char=escapechar,
     ) as chunks_dir:
+
+        num_files = num_records // chunksize
+
+        assert num_files == len(list(chunks_dir.iterdir()))
 
         assert num_records == sum(
             len(pd.read_parquet(file)) for file in chunks_dir.iterdir()
