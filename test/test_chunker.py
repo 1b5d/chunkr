@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-from src.chunkr import create_chunks_dir
-from src.exceptions import ChunkrInvalid
+from chunkr import create_chunks_dir
+from exceptions import ChunkrInvalid
 
 
 def test_empty():

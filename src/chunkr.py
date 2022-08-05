@@ -12,7 +12,7 @@ from pyarrow import csv
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.exceptions import ChunkrInvalid
+from exceptions import ChunkrInvalid
 
 logger = logging.getLogger(__file__)
 
