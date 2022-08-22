@@ -2,6 +2,7 @@
 chunkr can chunk data files and convert them into
 other formats (currently parquet) at the same time
 """
+from datetime import datetime
 import logging
 import pathlib
 import shutil
@@ -22,15 +23,14 @@ class ChunksDir:
     """
     file_extensions = None
 
-    def __init__(
-        self,
-        name,
-        path,
-        output_path,
-        chunk_size=100_000,
-        storage_options=None,
-        write_options=None,
-    ) -> None:
+    def __init__(self,
+                 name,
+                 path,
+                 output_path,
+                 chunk_size=100_000,
+                 storage_options=None,
+                 write_options=None,
+                 exclude=None) -> None:
         """initializes the base class
 
         Args:
@@ -42,31 +42,47 @@ class ChunksDir:
                 e.g. username, password etc. Defaults to None.
             write_options (dict, optional): options for writing the chunks passed to the
                 respective library. Defaults to None.
+            exclude (list, optional): list of files to be excluded
         """
         self.path = path
         self.chunk_size = chunk_size
         self.storage_options = storage_options or {}
         self.write_options = write_options or {}
-        self.dir_path = pathlib.Path(
+        self.exclude = exclude or []
+        self.selected_files = {}
+        self._dir_path = pathlib.Path(
             output_path) / f"chunkr_job_{name}_{time.time()}"
         self.fs, _ = fsspec.core.url_to_fs(path, **self.storage_options)
 
     def _create_chunk_filename(self):
         file_name = f"chunkr_chunk_{time.time()}.parquet"
-        return self.dir_path / file_name
+        return self._dir_path / file_name
 
     def _write_chunk(self, df, filename, **write_options):
         logger.debug("writing parquet chunk file %s", filename)
         table = pa.Table.from_pandas(df, **write_options)
         pq.write_table(table, filename, use_deprecated_int96_timestamps=True)
 
-    def _get_extension(self, path):
-        return pathlib.Path(path).suffix.lstrip(".")
+    def _get_extension(self):
+        return pathlib.Path(self.path).suffix.lstrip(".")
 
-    def _process_dispatch(self, path):
-        openfiles = fsspec.open_files(path,
+    def _format_fullname(self, filepath):
+        return f'{self.path}->{filepath}'
+
+    def _process_dispatch(self):
+        openfiles = fsspec.open_files(self.path,
                                       compression="infer",
                                       **self.storage_options)
+        self.selected_files = {}
+        for openfile in reversed(openfiles):
+            fullname = self._format_fullname(openfile.path)
+            if fullname in self.exclude:
+                logger.debug('excluding file: %s', fullname)
+                openfiles.remove(openfile)
+                continue
+            logger.info('selecting file: %s', fullname)
+            self.selected_files[fullname] = datetime.now().isoformat()
+
         with openfiles as filelikes:
             for filelike in filelikes:
                 self._process(filelike)
@@ -75,18 +91,18 @@ class ChunksDir:
         raise NotImplementedError()
 
     def _cleanup(self):
-        logger.debug("cleaning up dir %s", self.dir_path)
-        shutil.rmtree(self.dir_path)
+        logger.debug("cleaning up dir %s", self._dir_path)
+        shutil.rmtree(self._dir_path)
 
     def __enter__(self):
-        self.dir_path.mkdir(parents=True, exist_ok=True)
+        self._dir_path.mkdir(parents=True, exist_ok=True)
         try:
-            self._process_dispatch(self.path)
+            self._process_dispatch()
         except BaseException as exc:
             self._cleanup()
             raise exc
 
-        return self.dir_path
+        return self._dir_path
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self._cleanup()
@@ -105,13 +121,14 @@ class CsvChunksDir(ChunksDir):
         chunk_size=100_000,
         storage_options=None,
         write_options=None,
+        exclude=None,
         **kwargs,
     ) -> None:
         self.name = name
         self.kwargs = kwargs
         self.chunk_size = chunk_size
         super().__init__(self.name, path, output_path, chunk_size,
-                         storage_options, write_options)
+                         storage_options, write_options, exclude)
 
     def _estimate_row_size(self, path, sample_block_size=256 * 1024):
         try:
@@ -180,13 +197,14 @@ class ParquetChunkDir(ChunksDir):
         chunk_size=100_000,
         storage_options=None,
         write_options=None,
+        exclude=None,
         **kwargs,
     ) -> None:
         self.name = name
         self.kwargs = kwargs
         self.chunk_size = chunk_size
         super().__init__(name, path, output_path, chunk_size, storage_options,
-                         write_options)
+                         write_options, exclude)
 
     def _process(self, path):
         parquet_file = pq.ParquetFile(path)

@@ -290,3 +290,33 @@ def test_sftp_parquet(sftpserver):
             chunks_dir_obj.fs.client.close()
             assert not chunks_dir.exists(
             ), "Chunks Dir should be removed after usage"
+
+
+def test_selected_files():
+    chunks_dir_obj = create_chunks_dir(
+        'parquet', 'TestTable',
+        "zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip", "/tmp",
+        1000)
+    with chunks_dir_obj as _:
+        pass
+    assert set(chunks_dir_obj.selected_files.keys()) == set([
+        'zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip->dir/partition_idx=1/4c87381207da4a009816ad14f9cd44ed.parquet',
+        'zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip->dir/partition_idx=0/5cdd4f4b6bf24543b6f57309e1b3cf7a.parquet'
+    ])
+
+
+def test_excluded_files():
+    chunks_dir_obj = create_chunks_dir(
+        'parquet',
+        'TestTable',
+        "zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip",
+        "/tmp",
+        1000,
+        exclude=[
+            'zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip->dir/partition_idx=1/4c87381207da4a009816ad14f9cd44ed.parquet'
+        ])
+    with chunks_dir_obj as _:
+        pass
+    assert set(chunks_dir_obj.selected_files.keys()) == set([
+        'zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip->dir/partition_idx=0/5cdd4f4b6bf24543b6f57309e1b3cf7a.parquet'
+    ])

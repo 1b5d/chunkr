@@ -27,8 +27,13 @@ repos:
     - id: flake8
       additional_dependencies: [mccabe]
       args: ["--max-line-length", "100", "--max-complexity", "10"]
-  - repo: https://github.com/PyCQA/pylint/
-    rev: v2.14.5
+      exclude: test/
+  - repo: local
     hooks:
     - id: pylint
+      name: pylint
+      entry: pylint
+      language: system
+      types: [python]
+      require_serial: true
       exclude: test/
