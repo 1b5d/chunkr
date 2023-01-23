@@ -1,4 +1,15 @@
 
+<a id='changelog-0.2.1'></a>
+# 0.2.1 — 2023-01-23
+
+## Removed
+
+- Support for Python < 3.8
+
+## Changed
+
+- Security updates through the upgrade of dependecies
+
 <a id='changelog-0.2.0'></a>
 # 0.2.0 — 2022-08-22
 
