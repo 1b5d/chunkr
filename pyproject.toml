@@ -28,8 +28,11 @@ pythonpath = ["."]
 [tool.scriv]
 format = "md"
 
-[tool.yapf]
-based_on_style = "google"
+[tool.black]
+line-length = 80
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.pylint]
 init-hook = 'from pylint.config import find_default_config_files; import os, sys; sys.path.append(os.path.dirname(next(find_default_config_files())))'

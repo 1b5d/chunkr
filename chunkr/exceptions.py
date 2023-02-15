@@ -3,5 +3,4 @@
 
 
 class ChunkrInvalid(BaseException):
-    """a general exception for chunkr
-    """
+    """a general exception for chunkr"""
