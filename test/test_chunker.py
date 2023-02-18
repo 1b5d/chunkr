@@ -27,6 +27,14 @@ def test_empty():
             10000,
         ],
         [
+            "test/csv/semicol_dquote_dquote_n_h.csv",
+            100000,
+            ";",
+            "\\",
+            '"',
+            10000,
+        ],
+        [
             "test/csv/semicol_dquote_backslash_n_h.csv",
             1000,
             ";",
@@ -123,7 +131,7 @@ def test_csv(
         delimiter=delimiter,
         escape_char=escapechar,
     ) as chunks_iter:
-        num_files = num_records // chunksize
+        num_files = max(num_records // chunksize, 1)
         batches = list(chunks_iter)
 
         assert num_files == len(batches)
@@ -134,62 +142,67 @@ def test_csv(
 
 
 @pytest.mark.parametrize(
-    "filepath, chunksize, num_files",
+    "filepath, chunksize, num_records",
     (
         [
             "test/parquet/pyarrow_snappy.parquet",
             1000,
-            10,
+            10000,
+        ],
+        [
+            "test/parquet/pyarrow_snappy.parquet",
+            100000,
+            10000,
         ],
         [
             "test/parquet/pyarrow_gzip.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "test/parquet/pyarrow_brotli.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "test/parquet/fastparquet_snappy.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "test/parquet/fastparquet_gzip.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "test/parquet/fastparquet_brotli.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "test/parquet/dir/partition_idx=*/*.parquet",
             1000,
-            10,
+            10000,
         ],
         [
             "zip://dir/partition_idx=*/*.parquet::test/parquet/archive.zip",
             1000,
-            10,
+            10000,
         ],
         [
             "tar://partition_idx=*/*.parquet::test/parquet/archive.tar.gz",
             1000,
-            10,
+            10000,
         ],
     ),
 )
-def test_parquet(filepath, chunksize, num_files):
+def test_parquet(filepath, chunksize, num_records):
     with create_parquet_chunk_iter(filepath, chunksize) as chunks_iter:
+        num_files = max(num_records // chunksize, 1)
         batches = list(chunks_iter)
         assert num_files == len(
             batches
-        ), "this file should be split into 10 chunks"
-        for batch in batches:
-            assert (
-                len(batch) == chunksize
-            ), f"chunk should contain [{chunksize}] rows"
+        ), f"this file should be split into {num_files} chunks"
+        assert (
+            sum(len(batch) for batch in batches) == num_records
+        ), f"total number of records should be [{num_records}]"

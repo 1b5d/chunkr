@@ -1,4 +1,11 @@
 
+<a id='changelog-0.3.1'></a>
+# 0.3.1 — 2023-02-18
+
+## Changed
+
+- Fix a bug where chunksize > total rows
+
 <a id='changelog-0.3.0'></a>
 # 0.3.0 — 2023-02-18
 

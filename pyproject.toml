@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chunkr"
-version = "0.3.0"
+version = "0.3.1"
 description = "A library for chunking different types of data files."
 authors = ["1b5d <8110504+1b5d@users.noreply.github.com>"]
 homepage = "https://github.com/1b5d/chunkr"

@@ -161,6 +161,8 @@ class CsvChunker(Chunker):
                             yield pa.Table.from_batches(local_batches)
 
                     except StopIteration:
+                        if batch_capa > 0:
+                            yield pa.Table.from_batches(local_batches)
                         break
         except pa.ArrowInvalid as e:
             raise ChunkrInvalid(str(e)) from e
