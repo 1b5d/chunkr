@@ -31,7 +31,7 @@ CSV input:
 ```py
 from chunkr import create_csv_chunk_iter
 
-with create_csv_chunk_iter(path, chunk_size, storage_options, **extra_args) as chunk_iter:
+with create_csv_chunk_iter(path, chunk_size, storage_options, exclude, **extra_args) as chunk_iter:
     # process chunks
     for chunk in chunk_iter:
         # process chunk.to_pandas() or sth
@@ -43,7 +43,7 @@ Parquet:
 ```py
 from chunkr import create_parquet_chunk_iter
 
-with create_parquet_chunk_iter(path, chunk_size, storage_options, **extra_args) as chunk_iter:
+with create_parquet_chunk_iter(path, chunk_size, storage_options, exclude, **extra_args) as chunk_iter:
     # process chunks
     for chunk in chunk_iter:
         # process chunk.to_pandas() or sth
