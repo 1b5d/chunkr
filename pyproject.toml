@@ -10,7 +10,7 @@ repository = "https://github.com/1b5d/chunkr"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pyarrow = "^8.0.0"
+pyarrow = "^11.0.0"
 paramiko = "^2.11.0"
 fsspec = "^2022.7.1"
 
