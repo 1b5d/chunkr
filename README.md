@@ -55,6 +55,7 @@ parameters:
 - path (str): the path of the input (local, sftp etc, see [fsspec](https://filesystem-spec.readthedocs.io/en/latest/) for possible inputs, not everything is supported though)
 - chunk_size (int, optional): number of records in a chunk. Defaults to 100_000.
 - storage_options (dict, optional): extra options to pass to the underlying storage e.g. username, password etc. Defaults to None.
+- exclude (list, optional): a list of files to be excluded, formatted as `{path}->{filepath}` where `path` is the input path and `filepath` is the concrete file path resolved in the target file system
 - extra_args (dict, optional): extra options passed on to the parsing system, file type specific
 
 
@@ -65,7 +66,7 @@ CSV input:
 ```py
 from chunkr import create_csv_chunk_dir
 
-with create_csv_chunk_dir(input_filepath, output_dir, chunk_size, storage_options, write_options, exclude, **extra_args) as chunks_dir:
+with create_csv_chunk_dir(path, output_path, chunk_size, storage_options, write_options, exclude, **extra_args) as chunks_dir:
     # process chunk files inside dir
     pd.read_parquet(file) for file in chunks_dir.iterdir()
     # the directory will be deleted when the context manager exits 
@@ -74,9 +75,9 @@ with create_csv_chunk_dir(input_filepath, output_dir, chunk_size, storage_option
 or Parquet:
 
 ```py
-from chunkr import create_csv_chunk_dir
+from chunkr import create_parquet_chunk_dir
 
-with create_csv_chunk_dir(input_filepath, output_dir, chunk_size, storage_options, write_options, exclude, **extra_args) as chunks_dir:
+with create_parquet_chunk_dir(path, output_path, chunk_size, storage_options, write_options, exclude, **extra_args) as chunks_dir:
     # process chunk files inside dir
     pd.read_parquet(file) for file in chunks_dir.iterdir()
     # the directory will be deleted when the context manager exits
@@ -90,6 +91,7 @@ parameters:
 - chunk_size (int, optional): number of records in a chunk. Defaults to 100_000.
 - storage_options (dict, optional): extra options to pass to the underlying storage e.g. username, password etc. Defaults to None.
 - write_options (dict, optional): extra options for writing the chunks passed to PyArrow's [write_table()](https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html) function. Defaults to None.
+- exclude (list, optional): a list of files to be excluded, formatted as `{path}->{filepath}` where `path` is the input path and `filepath` is the concrete file path resolved in the target file system
 - extra_args (dict, optional): extra options passed on to the parsing system, file specific
 
 >**Note**: currently chunkr only supports parquet as the output chunk files format
