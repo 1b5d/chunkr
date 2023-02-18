@@ -10,13 +10,13 @@ repository = "https://github.com/1b5d/chunkr"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pyarrow = "^8.0.0"
+pyarrow = "^11.0.0"
 paramiko = "^2.11.0"
 fsspec = "^2022.7.1"
 
 [tool.poetry.dev-dependencies]
 pandas = "^1.3.5"
-pre-commit = "^2.20.0"
+pre-commit = "^3.0.4"
 pytest-sftpserver = "^1.3.0"
 scriv = "^1.2.0"
 pytest = "^7.2.1"
@@ -28,8 +28,11 @@ pythonpath = ["."]
 [tool.scriv]
 format = "md"
 
-[tool.yapf]
-based_on_style = "google"
+[tool.black]
+line-length = 80
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [tool.pylint]
 init-hook = 'from pylint.config import find_default_config_files; import os, sys; sys.path.append(os.path.dirname(next(find_default_config_files())))'

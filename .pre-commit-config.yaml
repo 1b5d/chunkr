@@ -11,13 +11,13 @@ repos:
         exclude: '.*\.csv$'
     -   id: mixed-line-ending
         exclude: '.*\.csv$'
-  - repo: https://github.com/google/yapf
-    rev: 'v0.32.0'
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
     hooks:
-      - id: yapf
-        additional_dependencies: ['toml']
+    - id: black
+      language_version: python3.8
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.12.0
     hooks:
       - id: isort
         args: ["--profile", "google"]
@@ -28,6 +28,12 @@ repos:
       additional_dependencies: [mccabe]
       args: ["--max-line-length", "100", "--max-complexity", "10"]
       exclude: test/
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.0.0
+    hooks:
+    - id: mypy
+      exclude: test/
+      args: [--strict]
   - repo: local
     hooks:
     - id: pylint
